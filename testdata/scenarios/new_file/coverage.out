@@ -1,0 +1,6 @@
+mode: count
+github.com/seriousben/go-patch-cover/testdata/test-project/func1.go:5.36,8.11 2 1
+github.com/seriousben/go-patch-cover/testdata/test-project/func1.go:14.2,14.11 1 1
+github.com/seriousben/go-patch-cover/testdata/test-project/func1.go:20.2,20.26 1 1
+github.com/seriousben/go-patch-cover/testdata/test-project/func1.go:8.11,12.3 2 1
+github.com/seriousben/go-patch-cover/testdata/test-project/func1.go:14.11,18.3 2 0

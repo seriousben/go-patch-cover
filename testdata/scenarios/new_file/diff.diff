@@ -1,0 +1,70 @@
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..cf8378b
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,5 @@
++
++testdata/test-project/coverage.out : $(wildcard testdata/test-project/*.go)
++	rm $@ \
++	cd testdata/test-project \
++	go test -coverprofile=coverage.out -covermode=count ./...
+diff --git a/go.mod b/go.mod
+new file mode 100644
+index 0000000..6225091
+--- /dev/null
++++ b/go.mod
+@@ -0,0 +1,3 @@
++module github.com/seriousben/go-patch-cover
++
++go 1.17
+diff --git a/testdata/test-project/func1.go b/testdata/test-project/func1.go
+new file mode 100644
+index 0000000..39354a3
+--- /dev/null
++++ b/testdata/test-project/func1.go
+@@ -0,0 +1,21 @@
++package testproject
++
++import "fmt"
++
++func Func1(bool1 bool, bool2 bool) {
++	fmt.Println("func1")
++
++	if bool1 {
++		fmt.Println("bool1", bool1)
++
++		fmt.Println("end bool1", bool2)
++	}
++
++	if bool2 {
++		fmt.Println("bool2", bool2)
++
++		fmt.Println("end bool2", bool2)
++	}
++
++	fmt.Println("end func1")
++}
+diff --git a/testdata/test-project/func1_test.go b/testdata/test-project/func1_test.go
+new file mode 100644
+index 0000000..5cb8c7b
+--- /dev/null
++++ b/testdata/test-project/func1_test.go
+@@ -0,0 +1,17 @@
++package testproject
++
++import "testing"
++
++func TestFunc1(t *testing.T) {
++	tests := map[string]struct {
++		bool1 bool
++		bool2 bool
++	}{
++		"bool1": {bool1: true},
++	}
++	for tn, tt := range tests {
++		t.Run(tn, func(t *testing.T) {
++			Func1(tt.bool1, tt.bool2)
++		})
++	}
++}
