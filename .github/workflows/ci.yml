@@ -20,8 +20,6 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     steps:
     - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
     - uses: WillAbides/setup-go-faster@v1.7.0
       with:
         go-version: "*"
@@ -39,6 +37,7 @@ jobs:
         args: build --snapshot --single-target
     - name: Report Coverage
       run: |
+        git fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin ${GITHUB_BASE_REF}
         git diff -U0 --no-color origin/${GITHUB_BASE_REF} > diff.diff
         go run cmd/main.go
 
