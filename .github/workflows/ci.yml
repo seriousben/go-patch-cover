@@ -45,7 +45,6 @@ jobs:
       with:
         fetch-depth: 0
     - uses: WillAbides/setup-go-faster@v1.7.0
-    prout
       with:
         go-version: '*'
     - name: Install goreleaser
