@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	coverage, err := patchcover.ProcessFiles("testdata/scenarios/new_file/diff.diff", "testdata/scenarios/new_file/coverage.out")
+	coverage, err := patchcover.ProcessFiles("diff.diff", "coverage.out")
 	if err != nil {
 		log.Fatal(err)
 	}

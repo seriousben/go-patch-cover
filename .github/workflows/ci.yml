@@ -20,10 +20,12 @@ jobs:
     if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - uses: WillAbides/setup-go-faster@v1.7.0
       with:
         go-version: "*"
-    - run: "go test ./..."
+    - run: "go test -coverprofile=coverage.out -covermode=count ./..."
     - run: "go vet ./..."
     - uses: dominikh/staticcheck-action@v1.1.0
       with:
@@ -35,6 +37,10 @@ jobs:
         distribution: goreleaser
         version: latest
         args: build --snapshot --single-target
+    - name: Report Coverage
+      run: |
+        git diff -U0 --no-color origin/${GITHUB_BASE_REF} > diff.diff
+        go run cmd/main.go
 
   releaser:
     name: "Releaser"
