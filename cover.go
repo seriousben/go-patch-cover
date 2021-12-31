@@ -52,7 +52,6 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile) 
 		blockloop:
 			for _, b := range p.Blocks {
 				//fmt.Printf("BLOCK %s:%d %d %d %d\n", p.FileName, b.StartLine, b.EndLine, b.NumStmt, b.Count)
-				data.PatchNumStmt += b.NumStmt
 				for _, t := range f.TextFragments {
 					for i, line := range t.Lines {
 						if line.Op != gitdiff.OpAdd {
@@ -63,8 +62,11 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile) 
 						// fmt.Printf("DIFF %s:%d %s\n", f.NewName, lineNum, lineString)
 
 						if b.StartLine <= lineNum && lineNum <= b.EndLine {
+							data.PatchNumStmt += b.NumStmt
 							//		fmt.Printf("COVER %s:%d %d %d - %s\n", p.FileName, lineNum, b.NumStmt, b.Count, lineString)
-							data.PatchCoverCount += b.NumStmt * b.Count
+							if b.Count > 0 {
+								data.PatchCoverCount += b.NumStmt
+							}
 							continue blockloop
 						}
 					}
@@ -77,7 +79,9 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile) 
 	for _, p := range coverProfiles {
 		for _, b := range p.Blocks {
 			data.NumStmt += b.NumStmt
-			data.CoverCount += b.NumStmt * b.Count
+			if b.Count > 0 {
+				data.CoverCount += b.NumStmt
+			}
 		}
 	}
 

@@ -14,5 +14,5 @@ func main() {
 	}
 
 	fmt.Printf("coverage: %.1f%% of statements\n", coverage.Coverage)
-	fmt.Printf("patch coverage: %.1f%% of changed statements\n", coverage.PatchCoverage)
+	fmt.Printf("patch coverage: %.1f%% of changed statements (%d/%d)\n", coverage.PatchCoverage, coverage.PatchCoverCount, coverage.PatchNumStmt)
 }
