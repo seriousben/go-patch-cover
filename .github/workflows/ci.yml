@@ -37,14 +37,40 @@ jobs:
     - name: Report Coverage
       if: github.event_name == 'pull_request'
       run: |
-        git fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin ${GITHUB_BASE_REF}
+        git fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin ${GITHUB_BASE_REF} +refs/notes/coverage:refs/notes/coverage || true
         git diff -U0 --no-color origin/${GITHUB_BASE_REF} > diff.diff
-        coverage_output="$(go run cmd/main.go)"
-        export COVERAGE_OUTPUT=$coverage_output
 
-        gh api graphql -X POST -F subjectId=$PULL_REQUEST_NODE_ID -F body="$COVERAGE_OUTPUT" -f query='
+        git notes --ref coverage show origin/${GITHUB_BASE_REF} > base_coverage.out || true
+        prev_coverage=`go tool cover -func=base_coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+
+        coverage_output="$(go run cmd/main.go)"
+        comment=$(cat <<EOF
+        <!-- go-patch-cover/report -->
+        previous coverage: ${prev_coverage}% of statements
+        new $coverage_output
+        EOF)
+
+        # comments$(gh api graphql -X GET -F subjectId=$PULL_REQUEST_NODE_ID -f query='
+          # query($subjectId: String!, $body: String!) {
+            # node(id: $subjectId) {
+              # ... on PullRequest {
+                # comments(first: 100) {
+                  # nodes {
+                    # id
+                    # isMinimized
+                    # body
+                  # }
+                # }
+              # }
+            # }
+          # }
+        # ' --jq '')
+
+        gh api graphql -X POST -F subjectId=$PULL_REQUEST_NODE_ID -F body="$comment" -f query='
           mutation AddComment($subjectId: String!, $body: String!) {
-            addComment(input: {subjectId: $subjectId, body: $body}) {}
+            addComment(input: {subjectId: $subjectId, body: $body}) {
+              clientMutationId
+            }
           }
         '
       env:
@@ -52,6 +78,14 @@ jobs:
         OWNER: ${{ github.repository_owner }}
         REPO: ${{ github.event.repository.name }}
         PULL_REQUEST_NODE_ID: ${{ github.event.pull_request.node_id }}
+    - name: Save Coverage
+      #if: github.event_name == 'push'
+      run: |
+        git fetch --no-tags --prune --progress --no-recurse-submodules origin refs/notes/coverage:refs/notes/coverage || true
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git notes --ref coverage add -f -F coverage.out origin/${GITHUB_BASE_REF}
+        git push origin refs/notes/coverage
 
   releaser:
     name: "Releaser"
