@@ -1,0 +1,11 @@
+builds:
+  - main: ./cmd
+    id: "cli"
+    binary: go-patch-cover
+    goos:
+      - linux
+      - darwin
+      - windows
+    env:
+      - CGO_ENABLED=0
+
