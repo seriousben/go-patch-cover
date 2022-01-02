@@ -101,7 +101,7 @@ jobs:
         # git fetch --no-tags --prune --progress --no-recurse-submodules origin refs/notes/coverage:refs/notes/coverage || true
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git notes --ref coverage add -f -F coverage.out origin/${GITHUB_BASE_REF}
+        git notes --ref coverage add -f -F coverage.out origin/${GITHUB_REF_NAME}
         git push origin refs/notes/coverage
 
   releaser:
