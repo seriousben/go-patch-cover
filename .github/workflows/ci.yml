@@ -16,7 +16,6 @@ jobs:
   checks:
     name: "Checks"
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
     steps:
     - uses: actions/checkout@v2
     - uses: WillAbides/setup-go-faster@v1.7.0
@@ -41,38 +40,55 @@ jobs:
         git diff -U0 --no-color origin/${GITHUB_BASE_REF} > diff.diff
 
         git notes --ref coverage show origin/${GITHUB_BASE_REF} > base_coverage.out || true
-        prev_coverage=`go tool cover -func=base_coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+        prev_coverage_output="previous coverage: unknown"
+        if [[ "0" != "$(cat base_coverage.out | wc -l)" ]]; then
+          prev_coverage=`go tool cover -func=base_coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
+          prev_coverage_output="previous coverage: ${prev_coverage}% of statements"
+        fi
 
         coverage_output="$(go run cmd/main.go)"
-        comment=$(cat <<EOF
+        comment_body=$(cat <<EOF
         <!-- go-patch-cover/report -->
-        previous coverage: ${prev_coverage}% of statements
-        new $coverage_output
-        EOF)
+        $prev_coverage_output
+        $coverage_output
+        EOF
+        )
 
-        # comments$(gh api graphql -X GET -F subjectId=$PULL_REQUEST_NODE_ID -f query='
-          # query($subjectId: String!, $body: String!) {
-            # node(id: $subjectId) {
-              # ... on PullRequest {
-                # comments(first: 100) {
-                  # nodes {
-                    # id
-                    # isMinimized
-                    # body
-                  # }
-                # }
-              # }
-            # }
-          # }
-        # ' --jq '')
-
-        gh api graphql -X POST -F subjectId=$PULL_REQUEST_NODE_ID -F body="$comment" -f query='
-          mutation AddComment($subjectId: String!, $body: String!) {
-            addComment(input: {subjectId: $subjectId, body: $body}) {
-              clientMutationId
+        comments="$(gh api graphql -F subjectId=$PULL_REQUEST_NODE_ID -f query='
+          query($subjectId: ID!) {
+            node(id: $subjectId) {
+              ... on PullRequest {
+                comments(first: 100) {
+                  nodes {
+                    id
+                    isMinimized
+                    body
+                  }
+                }
+              }
             }
           }
-        '
+        ' --jq '.data.node.comments.nodes | map(select((.body | contains("<!-- go-patch-cover/report -->")) and .isMinimized == false)) | map(.id)[]')"
+
+        if [[ -n "$comments" ]]; then
+          for val in $comments; do
+            gh api graphql -X POST -F id=$val -F body="$comment_body" -f query='
+              mutation UpdateComment($id: ID!, $body: String!) {
+                updateIssueComment(input: {id: $id, body: $body}) {
+                  clientMutationId
+                }
+              }
+            '
+          done
+        else
+          gh api graphql -X POST -F subjectId=$PULL_REQUEST_NODE_ID -F body="$comment_body" -f query='
+            mutation AddComment($subjectId: String!, $body: String!) {
+              addComment(input: {subjectId: $subjectId, body: $body}) {
+                clientMutationId
+              }
+            }
+          '
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OWNER: ${{ github.repository_owner }}
@@ -90,6 +106,7 @@ jobs:
   releaser:
     name: "Releaser"
     runs-on: ubuntu-latest
+    needs: checks
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     steps:
     - uses: actions/checkout@v2
