@@ -1,0 +1,31 @@
+name: "CI"
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  releaser:
+    name: "Releaser"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - uses: WillAbides/setup-go-faster@v1.7.0
+      with:
+        go-version: '*'
+    - name: Install goreleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        distribution: goreleaser
+        version: latest
+        install-only: true
+    - name: Release
+      run: goreleaser release --rm-dist
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
