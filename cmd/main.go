@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -54,13 +55,13 @@ func newCoverCommand() (cli.Command, error) {
 		fs: flag.NewFlagSet("cover", flag.ContinueOnError),
 	}
 
-	gc.fs.StringVar(&gc.OutputFlag, "o", "template", "coverage output format")
+	gc.fs.StringVar(&gc.OutputFlag, "o", "template", "coverage output format: json, template")
 	return gc, nil
 }
 
 func (g *CoverCommand) Help() string {
 	// TODO: Link to template variable struct on github.
-	return `Usage: go-patch-cover cover coverage diff [previous_coverage] [flags...]
+	return `Usage: go-patch-cover cover [flags...] coverage diff [previous_coverage] 
 
 Arguments:
 	coverage
@@ -124,6 +125,17 @@ func (g *CoverCommand) Run(args []string) int {
 	if err != nil {
 		log.Printf("[ERROR] %v\n", err)
 		return 1
+	}
+
+	if g.OutputFlag == "json" {
+		enc := json.NewEncoder(os.Stdout)
+		err := enc.Encode(coverage)
+		if err != nil {
+			log.Printf("[ERROR] %v\n", err)
+			return 1
+		}
+
+		return 0
 	}
 
 	if coverage.HasPrevCoverage {

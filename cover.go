@@ -44,16 +44,16 @@ func ProcessFiles(coverageFile, diffFile, prevCovFile string) (CoverageData, err
 }
 
 type CoverageData struct {
-	NumStmt         int
-	CoverCount      int
-	Coverage        float64
-	PatchNumStmt    int
-	PatchCoverCount int
-	PatchCoverage   float64
-	HasPrevCoverage bool
-	PrevNumStmt     int
-	PrevCoverCount  int
-	PrevCoverage    float64
+	NumStmt         int     `json:"num_stmt"`
+	CoverCount      int     `json:"cover_count"`
+	Coverage        float64 `json:"coverage"`
+	PatchNumStmt    int     `json:"patch_num_stmt"`
+	PatchCoverCount int     `json:"patch_cover_count"`
+	PatchCoverage   float64 `json:"patch_coverage"`
+	HasPrevCoverage bool    `json:"has_prev_coverage"`
+	PrevNumStmt     int     `json:"prev_num_stmt"`
+	PrevCoverCount  int     `json:"prev_cover_count"`
+	PrevCoverage    float64 `json:"prev_coverage"`
 }
 
 func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile, prevCoverProfiles []*cover.Profile) (CoverageData, error) {
