@@ -1,8 +1,12 @@
 {
-  "NumStmt": 8,
-  "CoverCount": 6,
-  "Coverage": 75,
-  "PatchNumStmt": 8,
-  "PatchCoverCount": 6,
-  "PatchCoverage": 75
+  "num_stmt": 8,
+  "cover_count": 6,
+  "coverage": 75,
+  "patch_num_stmt": 8,
+  "patch_cover_count": 6,
+  "patch_coverage": 75,
+  "has_prev_coverage": false,
+  "prev_num_stmt": 0,
+  "prev_cover_count": 0,
+  "prev_coverage": 0
 }

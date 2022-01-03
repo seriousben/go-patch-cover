@@ -23,7 +23,7 @@ func TestProcessFiles(t *testing.T) {
 		}
 
 		t.Run(fi.Name(), func(t *testing.T) {
-			cov, err := ProcessFiles(path.Join(scenarioDir, fi.Name(), "diff.diff"), path.Join(scenarioDir, fi.Name(), "coverage.out"))
+			cov, err := ProcessFiles(path.Join(scenarioDir, fi.Name(), "coverage.out"), path.Join(scenarioDir, fi.Name(), "diff.diff"), "")
 			assert.NilError(t, err)
 
 			covJSON, err := json.MarshalIndent(cov, "", "  ")
