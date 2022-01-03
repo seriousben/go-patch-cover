@@ -4,5 +4,9 @@
   "Coverage": 75,
   "PatchNumStmt": 8,
   "PatchCoverCount": 6,
-  "PatchCoverage": 75
+  "PatchCoverage": 75,
+  "HasPrevCoverage": false,
+  "PrevNumStmt": 0,
+  "PrevCoverCount": 0,
+  "PrevCoverage": 0
 }

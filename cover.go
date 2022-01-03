@@ -8,7 +8,7 @@ import (
 	"golang.org/x/tools/cover"
 )
 
-func ProcessFiles(diffFile, coverageFile string) (CoverageData, error) {
+func ProcessFiles(coverageFile, diffFile, prevCovFile string) (CoverageData, error) {
 	patch, err := os.Open(diffFile)
 	if err != nil {
 		return CoverageData{}, err
@@ -26,7 +26,21 @@ func ProcessFiles(diffFile, coverageFile string) (CoverageData, error) {
 		return CoverageData{}, err
 	}
 
-	return computeCoverage(files, profiles)
+	var prevProfiles []*cover.Profile
+	if prevCovFile != "" {
+		prevProfiles, err = cover.ParseProfiles(prevCovFile)
+		if err != nil {
+			return CoverageData{}, err
+		}
+	}
+
+	d, err := computeCoverage(files, profiles, prevProfiles)
+	if err != nil {
+		return CoverageData{}, err
+	}
+
+	d.HasPrevCoverage = prevCovFile != ""
+	return d, nil
 }
 
 type CoverageData struct {
@@ -36,9 +50,13 @@ type CoverageData struct {
 	PatchNumStmt    int
 	PatchCoverCount int
 	PatchCoverage   float64
+	HasPrevCoverage bool
+	PrevNumStmt     int
+	PrevCoverCount  int
+	PrevCoverage    float64
 }
 
-func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile) (CoverageData, error) {
+func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile, prevCoverProfiles []*cover.Profile) (CoverageData, error) {
 	var data CoverageData
 	// patch coverage
 	for _, p := range coverProfiles {
@@ -75,12 +93,22 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile) 
 		}
 	}
 
-	// global coverage
+	// total coverage
 	for _, p := range coverProfiles {
 		for _, b := range p.Blocks {
 			data.NumStmt += b.NumStmt
 			if b.Count > 0 {
 				data.CoverCount += b.NumStmt
+			}
+		}
+	}
+
+	// prev total coverage
+	for _, p := range prevCoverProfiles {
+		for _, b := range p.Blocks {
+			data.PrevNumStmt += b.NumStmt
+			if b.Count > 0 {
+				data.PrevCoverCount += b.NumStmt
 			}
 		}
 	}
@@ -92,6 +120,9 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile) 
 	}
 	if data.PatchNumStmt != 0 {
 		data.PatchCoverage = float64(data.PatchCoverCount) / float64(data.PatchNumStmt) * 100
+	}
+	if data.PrevNumStmt != 0 {
+		data.PrevCoverage = float64(data.PrevCoverCount) / float64(data.PrevNumStmt) * 100
 	}
 
 	return data, nil

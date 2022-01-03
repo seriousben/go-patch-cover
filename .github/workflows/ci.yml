@@ -39,17 +39,14 @@ jobs:
         git fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin ${GITHUB_BASE_REF} +refs/notes/coverage:refs/notes/coverage || true
         git diff -U0 --no-color origin/${GITHUB_BASE_REF} > diff.diff
 
-        git notes --ref coverage show origin/${GITHUB_BASE_REF} > base_coverage.out || true
-        prev_coverage_output="previous coverage: unknown"
-        if [[ "0" != "$(cat base_coverage.out | wc -l)" ]]; then
-          prev_coverage=`go tool cover -func=base_coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'`
-          prev_coverage_output="previous coverage: ${prev_coverage}% of statements"
+        git notes --ref coverage show origin/${GITHUB_BASE_REF} > base_coverage.out || rm base_coverage.out
+        if [[ -f "base_coverage.out" ]]; then
+          coverage_output="$(go run cmd/main.go cover coverage.out diff.diff base_coverage.out)"
+        else
+          coverage_output="$(go run cmd/main.go cover coverage.out diff.diff)"
         fi
-
-        coverage_output="$(go run cmd/main.go)"
         comment_body=$(cat <<EOF
         <!-- go-patch-cover/report -->
-        $prev_coverage_output
         $coverage_output
         EOF
         )
