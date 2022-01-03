@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - '*'
   pull_request:
 
 permissions:
@@ -95,31 +93,7 @@ jobs:
       if: github.event_name == 'push'
       run: |
         git fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin ${GITHUB_BASE_REF} +refs/notes/coverage:refs/notes/coverage || true
-        # git fetch --no-tags --prune --progress --no-recurse-submodules origin refs/notes/coverage:refs/notes/coverage || true
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git notes --ref coverage add -f -F coverage.out origin/${GITHUB_REF_NAME}
         git push origin refs/notes/coverage
-
-  releaser:
-    name: "Releaser"
-    runs-on: ubuntu-latest
-    needs: checks
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - uses: WillAbides/setup-go-faster@v1.7.0
-      with:
-        go-version: '*'
-    - name: Install goreleaser
-      uses: goreleaser/goreleaser-action@v2
-      with:
-        distribution: goreleaser
-        version: latest
-        install-only: true
-    - name: Release
-      run: goreleaser release --rm-dist
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
