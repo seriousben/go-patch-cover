@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
@@ -47,7 +46,8 @@ func main() {
 type CoverCommand struct {
 	fs *flag.FlagSet
 
-	OutputFlag string
+	OutputFlag   string
+	TemplateFlag string
 }
 
 func newCoverCommand() (cli.Command, error) {
@@ -56,6 +56,7 @@ func newCoverCommand() (cli.Command, error) {
 	}
 
 	gc.fs.StringVar(&gc.OutputFlag, "o", "template", "coverage output format: json, template")
+	gc.fs.StringVar(&gc.TemplateFlag, "tmpl", "", "go template string override")
 	return gc, nil
 }
 
@@ -95,7 +96,10 @@ Examples:
 		go-patch-cover cover coverage.out patch.diff prevcoverage.out
 
 	Display previous, total and patch coverage percentages as JSON to stdout:
-		go-patch-cover cover coverage.out patch.diff prevcoverage.out -o json
+		go-patch-cover cover -o json coverage.out patch.diff prevcoverage.out
+
+	Display patch coverage percentage to stdout by providing a custom template:
+		go-patch-cover cover -tmpl "{{ .PatchCoverage }}" coverage.out patch.diff
 `
 }
 
@@ -138,13 +142,12 @@ func (g *CoverCommand) Run(args []string) int {
 		return 0
 	}
 
-	if coverage.HasPrevCoverage {
-		fmt.Printf("previous coverage: %.1f%% of statements\n", coverage.PrevCoverage)
-	} else {
-		fmt.Println("previous coverage: unknown")
+	err = patchcover.RenderTemplateOutput(coverage, g.TemplateFlag, os.Stdout)
+	if err != nil {
+		log.Printf("[ERROR] %v\n", err)
+		return 1
 	}
-	fmt.Printf("new coverage: %.1f%% of statements\n", coverage.Coverage)
-	fmt.Printf("patch coverage: %.1f%% of changed statements (%d/%d)\n", coverage.PatchCoverage, coverage.PatchCoverCount, coverage.PatchNumStmt)
+
 	return 0
 }
 

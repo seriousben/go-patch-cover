@@ -1,6 +1,8 @@
 package patchcover
 
 import (
+	"html/template"
+	"io"
 	"os"
 	"strings"
 
@@ -54,6 +56,27 @@ type CoverageData struct {
 	PrevNumStmt     int     `json:"prev_num_stmt"`
 	PrevCoverCount  int     `json:"prev_cover_count"`
 	PrevCoverage    float64 `json:"prev_coverage"`
+}
+
+func RenderTemplateOutput(data CoverageData, tmplOverride string, out io.Writer) error {
+	const defaultTmpl = `
+{{- if .HasPrevCoverage -}}
+	previous coverage: {{printf "%.1f" .PrevCoverage}}% of statements
+{{ else -}}
+	previous coverage: unknown
+{{ end -}}
+new coverage: {{printf "%.1f" .Coverage}}% of statements
+patch coverage: {{printf "%.1f" .PatchCoverage}}% of changed statements ({{ .PatchCoverCount }}/{{ .PatchNumStmt }})
+`
+	tmpl := defaultTmpl
+	if tmplOverride != "" {
+		tmpl = tmplOverride
+	}
+	t, err := template.New("cover_template").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	return t.ExecuteTemplate(out, "cover_template", data)
 }
 
 func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile, prevCoverProfiles []*cover.Profile) (CoverageData, error) {
