@@ -1,5 +1,5 @@
 builds:
-  - main: ./cmd
+  - main: ./cmd/go-patch-cover
     id: "cli"
     binary: go-patch-cover
     goos:
