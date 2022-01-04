@@ -3,10 +3,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
-
-	"github.com/mitchellh/cli"
 
 	patchcover "github.com/seriousben/go-patch-cover"
 )
@@ -16,71 +15,67 @@ var (
 )
 
 func main() {
-	c := &cli.CLI{
-		Name: "go-patch-cover",
-		// TODO figure out version aligment with release
-		Version:      version,
-		HelpFunc:     cli.BasicHelpFunc("go-patch-cover"),
-		Autocomplete: true,
-
-		HelpWriter:  os.Stdout,
-		ErrorWriter: os.Stderr,
+	c := newCoverCommand(version)
+	if err := c.Run(os.Args[1:]); err != nil {
+		log.Printf("[ERROR] %v\n", err)
+		os.Exit(1)
 	}
-
-	c.Args = os.Args[1:]
-	c.Commands = map[string]cli.CommandFactory{
-		"cover": newCoverCommand,
-		"":      newCoverCommand,
-	}
-
-	c.HiddenCommands = []string{""}
-
-	exitStatus, err := c.Run()
-	if err != nil {
-		log.Println("[ERROR] ", err)
-	}
-
-	os.Exit(exitStatus)
+	os.Exit(0)
 }
 
 type CoverCommand struct {
 	fs *flag.FlagSet
 
+	VersionFlag  bool
+	HelpFlag     bool
 	OutputFlag   string
 	TemplateFlag string
+
+	version string
 }
 
-func newCoverCommand() (cli.Command, error) {
-	gc := &CoverCommand{
-		fs: flag.NewFlagSet("cover", flag.ContinueOnError),
+func newCoverCommand(version string) *CoverCommand {
+	c := &CoverCommand{
+		fs:      flag.NewFlagSet("", flag.ContinueOnError),
+		version: version,
 	}
 
-	gc.fs.StringVar(&gc.OutputFlag, "o", "template", "coverage output format: json, template")
-	gc.fs.StringVar(&gc.TemplateFlag, "tmpl", "", "go template string override")
-	return gc, nil
+	c.fs.Usage = c.Usage
+
+	c.fs.BoolVar(&c.VersionFlag, "version", false, "print go-patch-cover version")
+	c.fs.BoolVar(&c.HelpFlag, "help", false, "print go-patch-cover help")
+	c.fs.StringVar(&c.OutputFlag, "o", "template", "coverage output format: json, template")
+	c.fs.StringVar(&c.TemplateFlag, "tmpl", "", "go template string override")
+	return c
 }
 
-func (g *CoverCommand) Help() string {
+func (c *CoverCommand) Usage() {
 	// TODO: Link to template variable struct on github.
-	return `Usage: go-patch-cover cover [flags...] coverage diff [previous_coverage] 
+	usage := `Usage: go-patch-cover [--version] [--help] [flags...] coverage_file diff_file [previous_coverage_file] 
 
 Arguments:
-	coverage
+	coverage_file
 		go coverage file for the code after patch was applied.
 		Can be generated with any cover mode.
 		Example generation:
 			go test -coverprofile=coverage.out -covermode=count ./...
 
-	diff
+	diff_file
 		unified diff file of the patch to compute coverage for.
 		Example generation:
 			git diff -U0 --no-color origin/${GITHUB_BASE_REF} > patch.diff
 
-	previous_coverage [OPTIONAL]
+	previous_coverage_file [OPTIONAL]
 		go coverage file for the code before the patch was applied.
 		When not provided, previous coverage information will not be displayed.
 
 Flags:
+	--version
+		display go-patch-cover version.
+
+	--help
+		display this help message.
+
 	-o string
 		output format: json, template; default: template.
 
@@ -90,65 +85,64 @@ Flags:
 Examples:
 
 	Display total and patch coverage percentages to stdout:
-		go-patch-cover cover coverage.out patch.diff
+		go-patch-cover coverage.out patch.diff
 
 	Display previous, total and patch coverage percentages to stdout:
-		go-patch-cover cover coverage.out patch.diff prevcoverage.out
+		go-patch-cover coverage.out patch.diff prevcoverage.out
 
 	Display previous, total and patch coverage percentages as JSON to stdout:
-		go-patch-cover cover -o json coverage.out patch.diff prevcoverage.out
+		go-patch-cover -o json coverage.out patch.diff prevcoverage.out
 
 	Display patch coverage percentage to stdout by providing a custom template:
-		go-patch-cover cover -tmpl "{{ .PatchCoverage }}" coverage.out patch.diff
+		go-patch-cover -tmpl "{{ .PatchCoverage }}" coverage.out patch.diff
 `
+
+	_, _ = fmt.Fprint(os.Stdout, usage)
 }
 
-func (g *CoverCommand) Synopsis() string {
-	return "Display patch coverage percentages"
-}
-
-func (g *CoverCommand) Run(args []string) int {
-	if err := g.fs.Parse(args); err != nil {
-		log.Printf("[ERROR] %v\n", err)
-		return 1
+func (c *CoverCommand) Run(args []string) error {
+	if err := c.fs.Parse(args); err != nil {
+		return fmt.Errorf("flag parse error: %v", err)
 	}
 
-	covFile := g.fs.Arg(0)
+	if c.HelpFlag {
+		c.fs.Usage()
+		return nil
+	}
+
+	if c.VersionFlag {
+		fmt.Println(c.version)
+		return nil
+	}
+
+	covFile := c.fs.Arg(0)
 	if covFile == "" {
-		log.Printf("[ERROR] missing coverage file argument\n")
-		return 1
+		return fmt.Errorf("missing coverage file argument")
 	}
-	diffFile := g.fs.Arg(1)
+	diffFile := c.fs.Arg(1)
 	if diffFile == "" {
-		log.Printf("[ERROR] missing diff file argument\n")
-		return 1
+		return fmt.Errorf("missing diff file argument")
 	}
-	prevCovFile := g.fs.Arg(2)
+	prevCovFile := c.fs.Arg(2)
 
 	coverage, err := patchcover.ProcessFiles(covFile, diffFile, prevCovFile)
 	if err != nil {
-		log.Printf("[ERROR] %v\n", err)
-		return 1
+		return fmt.Errorf("processing error: %w", err)
 	}
 
-	if g.OutputFlag == "json" {
+	if c.OutputFlag == "json" {
 		enc := json.NewEncoder(os.Stdout)
 		err := enc.Encode(coverage)
 		if err != nil {
-			log.Printf("[ERROR] %v\n", err)
-			return 1
+			return fmt.Errorf("json output error: %w", err)
 		}
-
-		return 0
+		return nil
 	}
 
-	err = patchcover.RenderTemplateOutput(coverage, g.TemplateFlag, os.Stdout)
+	err = patchcover.RenderTemplateOutput(coverage, c.TemplateFlag, os.Stdout)
 	if err != nil {
-		log.Printf("[ERROR] %v\n", err)
-		return 1
+		return fmt.Errorf("json output error: %w", err)
 	}
 
-	return 0
+	return nil
 }
-
-var _ cli.Command = (*CoverCommand)(nil)

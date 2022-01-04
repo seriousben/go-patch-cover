@@ -39,9 +39,9 @@ jobs:
 
         git notes --ref coverage show origin/${GITHUB_BASE_REF} > base_coverage.out || rm base_coverage.out
         if [[ -f "base_coverage.out" ]]; then
-          coverage_output="$(go run cmd/main.go cover coverage.out diff.diff base_coverage.out)"
+          coverage_output="$(go run cmd/main.go coverage.out diff.diff base_coverage.out)"
         else
-          coverage_output="$(go run cmd/main.go cover coverage.out diff.diff)"
+          coverage_output="$(go run cmd/main.go coverage.out diff.diff)"
         fi
         comment_body=$(cat <<EOF
         <!-- go-patch-cover/report -->
