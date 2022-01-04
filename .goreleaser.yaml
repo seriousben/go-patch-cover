@@ -9,3 +9,15 @@ builds:
     env:
       - CGO_ENABLED=0
 
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^chore'
+    - Merge pull request
+    - Merge remote-tracking branch
+    - Merge branch
+    - go mod tidy
