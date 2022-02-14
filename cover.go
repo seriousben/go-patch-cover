@@ -16,8 +16,6 @@ func ProcessFiles(coverageFile, diffFile, prevCovFile string) (CoverageData, err
 		return CoverageData{}, err
 	}
 
-	// files is a slice of *gitdiff.File describing the files changed in the patch
-	// preamble is a string of the content of the patch before the first file
 	files, _, err := gitdiff.Parse(patch)
 	if err != nil {
 		return CoverageData{}, err
