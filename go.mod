@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/bluekeyes/go-gitdiff v0.6.0
-	golang.org/x/tools v0.1.9
+	golang.org/x/tools v0.1.11
 	gotest.tools/v3 v3.1.0
 )
 
