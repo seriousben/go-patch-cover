@@ -1,5 +1,5 @@
-github.com/bluekeyes/go-gitdiff v0.6.0 h1:zyDBSR/o1axUl4lD08EWkXO3I834tBimmGUB0mhrvhQ=
-github.com/bluekeyes/go-gitdiff v0.6.0/go.mod h1:QpfYYO1E0fTVHVZAZKiRjtSGY9823iCdvGXBcEzHGbM=
+github.com/bluekeyes/go-gitdiff v0.7.0 h1:w4SrRFcufU0/tEpWx3VurDBAnWfpxsmwS7yWr14meQk=
+github.com/bluekeyes/go-gitdiff v0.7.0/go.mod h1:QpfYYO1E0fTVHVZAZKiRjtSGY9823iCdvGXBcEzHGbM=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.6 h1:BKbKCqvP6I+rmFHt06ZmyQtvB8xAkWdhFyr0ZUNZcxQ=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
