@@ -21,9 +21,8 @@ jobs:
         go-version: "*"
     - run: "go test -coverprofile=coverage.out -covermode=count ./..."
     - run: "go vet ./..."
-    - uses: dominikh/staticcheck-action@v1.1.0
+    - uses: dominikh/staticcheck-action@v1.2.0
       with:
-        version: "2021.1.2"
         install-go: false
     - name: Test Release
       uses: goreleaser/goreleaser-action@v2
@@ -77,7 +76,7 @@ jobs:
           done
         else
           gh api graphql -X POST -F subjectId=$PULL_REQUEST_NODE_ID -F body="$comment_body" -f query='
-            mutation AddComment($subjectId: String!, $body: String!) {
+            mutation AddComment($subjectId: ID!, $body: String!) {
               addComment(input: {subjectId: $subjectId, body: $body}) {
                 clientMutationId
               }
