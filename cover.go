@@ -92,15 +92,23 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile, 
 			for _, b := range p.Blocks {
 				//fmt.Printf("BLOCK %s:%d %d %d %d\n", p.FileName, b.StartLine, b.EndLine, b.NumStmt, b.Count)
 				for _, t := range f.TextFragments {
-					for i, line := range t.Lines {
-						if line.Op != gitdiff.OpAdd {
+					// lineNum tracks the new-file line number. It only
+					// advances for lines that occupy a line in the new
+					// file (context or added); removed lines don't, so
+					// they must not shift the count. Indexing by the raw
+					// slice position instead double-counts removed lines
+					// and misattributes later added lines to the wrong
+					// new-file line whenever a hunk removes more lines
+					// than it adds (e.g. deleting a stale comment next
+					// to the changed statement).
+					lineNum := int(t.NewPosition)
+					for _, line := range t.Lines {
+						if line.Op == gitdiff.OpDelete {
 							continue
 						}
-						lineNum := int(t.NewPosition) + i
-						//lineString := strings.ReplaceAll(line.Line, "\n", "")
-						// fmt.Printf("DIFF %s:%d %s\n", f.NewName, lineNum, lineString)
-
-						if b.StartLine <= lineNum && lineNum <= b.EndLine {
+						if line.Op == gitdiff.OpAdd && b.StartLine <= lineNum && lineNum <= b.EndLine {
+							//lineString := strings.ReplaceAll(line.Line, "\n", "")
+							// fmt.Printf("DIFF %s:%d %s\n", f.NewName, lineNum, lineString)
 							data.PatchNumStmt += b.NumStmt
 							//		fmt.Printf("COVER %s:%d %d %d - %s\n", p.FileName, lineNum, b.NumStmt, b.Count, lineString)
 							if b.Count > 0 {
@@ -108,6 +116,7 @@ func computeCoverage(diffFiles []*gitdiff.File, coverProfiles []*cover.Profile, 
 							}
 							continue blockloop
 						}
+						lineNum++
 					}
 				}
 			}

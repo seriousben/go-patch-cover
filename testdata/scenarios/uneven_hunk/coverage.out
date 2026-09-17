@@ -1,0 +1,4 @@
+mode: count
+regress/pkg/foo.go:3.27,4.13 1 1
+regress/pkg/foo.go:4.13,6.3 1 0
+regress/pkg/foo.go:7.2,7.10 1 1

@@ -1,0 +1,12 @@
+{
+  "num_stmt": 3,
+  "cover_count": 2,
+  "coverage": 66.66666666666666,
+  "patch_num_stmt": 1,
+  "patch_cover_count": 1,
+  "patch_coverage": 100,
+  "has_prev_coverage": false,
+  "prev_num_stmt": 0,
+  "prev_cover_count": 0,
+  "prev_coverage": 0
+}
