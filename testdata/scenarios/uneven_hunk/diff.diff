@@ -1,0 +1,9 @@
+diff --git a/pkg/foo.go b/pkg/foo.go
+index 640818f..94e13f2 100644
+--- a/pkg/foo.go
++++ b/pkg/foo.go
+@@ -7,3 +7 @@ func Bar(v string) string {
+-	// stale comment line one
+-	// stale comment line two
+-	return ""
++	return v
